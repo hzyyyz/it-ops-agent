@@ -6,6 +6,7 @@
 
 - **ReAct Agent 推理**：思考→行动→观察→再思考的自主推理链路，自动判断何时调用哪个工具
 - **RAG 检索增强**：基于 Chroma 向量库的IT运维知识检索，覆盖故障排除、安全策略、选购配置指南等场景
+- **真实设备指标**：`check_device_status` 通过 psutil 读取本机真实 CPU/内存/磁盘/开机时长，非模拟数据
 - **多轮对话记忆**：Agent 携带完整对话历史进行推理，支持上下文连续的追问和补充
 - **设备健康度报告**：结合员工设备台账自动生成月度/年度设备资产健康度报告与运维建议
 - **动态提示词切换**：通过中间件自动识别报告生成场景，切换专用提示词模板
@@ -44,7 +45,7 @@ Agent项目/
 │   ├── rag_summarize.txt       # RAG 总结提示词
 │   └── report_prompt.txt       # 报告生成提示词
 ├── data/
-│   ├── external/records.csv    # 设备资产台账模拟数据（10员工×12月）
+│   ├── external/records.csv    # 设备资产台账模拟数据（10员工×2025-2026年月度记录）
 │   ├── 故障排除.txt             # IT设备故障排查知识库
 │   ├── 维护保养.txt             # IT设备维护保养规范
 │   ├── 选购指南.txt             # 企业IT设备采购配置指南
@@ -82,7 +83,7 @@ pip install -r requirements.txt
 编辑 `Agent项目/config/rag.yml`：
 
 ```yaml
-chat_model_name: deepseek-v4-pro
+chat_model_name: deepseek-v4-flash
 openai_base_url: https://api.deepseek.com
 openai_api_key: "your-api-key"      # 可选，也可通过环境变量设置
 embedding_model_name: BAAI/bge-small-zh-v1.5
@@ -121,7 +122,7 @@ docker-compose up -d           # 构建并启动
 | 工具名称 | 功能 | 入参 | 可扩展方向 |
 |---------|------|------|-----------|
 | `search_knowledge_base` | 从IT运维知识库检索专业技术资料 | query: str | 接入 Confluence/Jira Wiki API |
-| `check_device_status` | 查询设备实时运行状态（CPU/内存/磁盘/网络） | asset_id: str | 接入 Prometheus/Zabbix API |
+| `check_device_status` | 读取本机真实运行状态（CPU/内存/磁盘/开机时长，基于 psutil） | asset_id: str | 接入 Prometheus/Zabbix API |
 | `get_employee_department` | 获取当前员工所属部门 | 无 | 接入 LDAP/AD |
 | `get_employee_id` | 获取当前员工工号 | 无 | 接入 SSO 系统 |
 | `get_current_month` | 获取当前月份 | 无 | — |
@@ -145,11 +146,11 @@ docker-compose up -d           # 构建并启动
 
 ## 有待扩展的接口
 
-当前工具返回模拟数据（Mock），以下接口预留了真实 API 接入点：
+部分工具返回模拟数据（Mock），以下接口预留了真实 API 接入点：
 
 | 工具 | 当前实现 | 可替换为 |
 |------|---------|---------|
-| `check_device_status` | 随机返回预设状态 | Prometheus API / Zabbix API / 云厂商监控 API |
+| `check_device_status` | 读取本机真实指标（psutil） | Prometheus API / Zabbix API / 云厂商监控 API |
 | `get_employee_department` | 随机返回部门 | LDAP/AD 查询 / HR 系统 API |
 | `get_employee_id` | 随机返回工号 | SSO/OIDC 用户信息接口 |
 | `query_asset_record` | 本地 CSV 文件 | CMDB API / 资产管理系统数据库 |

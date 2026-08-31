@@ -2,7 +2,8 @@ from langchain_core.tools import tool
 from langgraph.prebuilt.tool_node import ToolCallRequest
 
 from rag.rag_service import RagSummarizeService
-import random, os
+import random, os, psutil, time
+from datetime import datetime
 from utils.config_handler import agent_conf
 from utils.path_tool import get_abs_path
 from utils.logger_handler import logger
@@ -12,8 +13,6 @@ rag = RagSummarizeService()
 
 employee_ids = ["EMP1001", "EMP1002", "EMP1003", "EMP1004", "EMP1005",
                 "EMP1006", "EMP1007", "EMP1008", "EMP1009", "EMP1010"]
-month_arr = ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06",
-             "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"]
 
 external_data = {}
 
@@ -23,16 +22,20 @@ def search_knowledge_base(query: str) -> str:
     return rag.rag_summarize(query)
 
 
-@tool(description="根据设备资产编号查询设备实时运行状态，包括CPU、内存、磁盘、网络连接等核心指标")
-def check_device_status(asset_id: str) -> str:
-    status_options = [
-        f"设备[{asset_id}]运行正常 | CPU: 23% | 内存: 45% | 磁盘: 62% | 网络延迟: 2ms | 在线时长: 47天",
-        f"设备[{asset_id}]CPU使用率偏高: 89% | 内存: 72% | 磁盘: 55% | 网络正常 | 建议排查高负载进程",
-        f"设备[{asset_id}]磁盘空间不足: 91% | CPU: 34% | 内存: 58% | 网络正常 | 建议清理临时文件",
-        f"设备[{asset_id}]网络连接异常: 丢包率15% | CPU: 28% | 内存: 41% | 磁盘: 48% | 建议检查网卡配置",
-        f"设备[{asset_id}]所有指标正常 | CPU: 18% | 内存: 37% | 磁盘: 43% | 网络延迟: 1ms | 安全补丁: 已更新",
-    ]
-    return random.choice(status_options)
+@tool(description="查询设备实时运行状态，读取本机真实的CPU、内存、磁盘、开机时长指标。asset_id用于标注设备名称，可选")
+def check_device_status(asset_id: str = "LOCAL-HOST") -> str:
+    psutil.cpu_percent(interval=None)  # 建立基准采样，避免首次调用返回0
+    time.sleep(0.2)
+    cpu = psutil.cpu_percent(interval=None)
+    memory = psutil.virtual_memory().percent
+    disk = psutil.disk_usage(".").percent
+    uptime = datetime.now() - datetime.fromtimestamp(psutil.boot_time())
+    if uptime.days > 0:
+        uptime_str = f"{uptime.days}天{uptime.seconds // 3600}小时"
+    else:
+        uptime_str = f"{uptime.seconds // 3600}小时{uptime.seconds % 3600 // 60}分钟"
+    return (f"设备[{asset_id}]实时状态 | CPU: {cpu}% | 内存: {memory}% | "
+            f"磁盘: {disk}% | 开机时长: {uptime_str}")
 
 
 @tool(description="获取当前员工所属部门名称，以纯字符形式返回")
@@ -48,7 +51,7 @@ def get_employee_id() -> str:
 
 @tool(description="获取当前月份，格式为YYYY-MM，以纯字符形式返回")
 def get_current_month() -> str:
-    return random.choice(month_arr)
+    return datetime.now().strftime("%Y-%m")
 
 
 def load_asset_records():

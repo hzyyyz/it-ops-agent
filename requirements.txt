@@ -10,6 +10,9 @@ langchain-community>=0.4.0
 # Embedding
 sentence-transformers>=5.0.0
 
+# 系统指标读取（真实设备状态）
+psutil>=5.9.0
+
 # RAG & 向量数据库
 langchain-chroma>=1.0.0
 langchain-huggingface>=1.0.0

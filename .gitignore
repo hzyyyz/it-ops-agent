@@ -12,6 +12,9 @@ dist/
 build/
 .pytest_cache/
 
+# 编辑器临时备份文件
+*.tmp.*
+
 # 向量数据库
 chroma_db/
 *.sqlite3

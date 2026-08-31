@@ -1,0 +1,26 @@
+企业IT设备采购与配置指南
+
+一、办公笔记本选购标准
+1. 普通办公（行政、财务、市场等）：处理器i5/R5及以上，12代之后，建议i5-1335U或R5 7530U；内存16GB起步（8GB已无法满足多任务办公需求）；存储512GB NVMe SSD起步；屏幕14英寸/15.6英寸，1920×1080分辨率，防眩光面板；接口至少2个USB-A、1个USB-C（支持PD充电）、HDMI；推荐型号：ThinkPad T14、Dell Latitude 5440、HP EliteBook 840。
+2. 开发人员：处理器i7/R7及以上，推荐i7-13700H或R7 7840HS；内存32GB起步（Docker/虚拟机/K8s本地开发需要大内存）；存储1TB NVMe SSD；屏幕15.6英寸/16英寸，2560×1440及以上分辨率；推荐型号：ThinkPad P系列、Dell XPS 15、MacBook Pro 16(M3 Pro+)。
+3. 设计师/视频剪辑：处理器i9/R9或Apple M3 Max；内存32GB起步，推荐64GB；显卡独立显卡（NVIDIA RTX 4060起步）；屏幕色域覆盖100% DCI-P3，出厂校色Delta E<2；存储1TB SSD + 外置高速存储；推荐型号：MacBook Pro 16(M3 Max)、ASUS ProArt系列、Dell Precision。
+
+二、台式机/工作站选购标准
+1. 普通办公：迷你主机优先（节省空间）：ThinkCentre M90q、Dell OptiPlex Micro；配置：i5/16GB/512GB SSD；显示器：23.8英寸/27英寸，IPS面板，可升降旋转支架。
+2. 开发/测试服务器：配置：i9/R9，64GB内存，1TB+2TB双SSD；系统：推荐Ubuntu 22.04 LTS（稳定性优先）；显示器：27英寸/32英寸4K，双屏设置。
+3. 构建/CI服务器：Mac Mini M2 Pro：iOS/macOS应用构建；构建服务器必须配备UPS不间断电源；存储冗余：RAID 1系统盘 + RAID 5数据盘。
+
+三、外设选购建议
+1. 显示器：程序员推荐27英寸2K/4K，可旋转竖屏看代码；设计师优先色准（Delta E<2，支持HDR）；接口必须支持Type-C一线连（充电+视频+数据传输）。
+2. 键盘鼠标：长时间打字推荐机械键盘（红轴/茶轴）；鼠标根据手型选择，推荐人体工学垂直鼠标；所有键鼠必须支持2.4G无线+蓝牙双模。
+3. 扩展坞：确认兼容性（Dell WD22TB4仅完美兼容Dell笔记本）；Thunderbolt 4扩展坞优先，向下兼容USB-C；必须支持外接2台4K@60Hz显示器。
+
+四、软件许可与采购
+1. 操作系统：企业必须使用正版操作系统，采购设备时附带OEM授权；Windows专业版（加入域功能、BitLocker、远程桌面）；开发测试环境推荐Ubuntu LTS（免费且稳定）。
+2. 办公软件：Microsoft 365 Business Premium（含Office桌面版+Teams+Exchange邮箱）；替代方案：WPS Office专业版（兼容性好、价格更低）。
+3. 安全软件：EDR终端防护（如CrowdStrike/SentinelOne/微软Defender for Endpoint）；MDM设备管理（Intune/Jamf Pro）；密码管理器企业版（1Password Business/Bitwarden Enterprise）。
+
+五、采购流程规范
+1. 需求审批：部门主管审批→IT部门评估配置合理性→采购部门询价比价；预算5000元以上设备需要三家比价；预算20000元以上需要技术评审。
+2. 验收标准：核对型号、配置与采购单一致；开机检查：系统信息、磁盘分区、预装软件；性能基准测试（如Cinebench、CrystalDiskMark）与同型号对比；外观检查：屏幕坏点、键盘按键、接口功能。
+3. 资产入库：登记资产编号并贴标签；录入资产管理系统；配置MDM自动注册；安装必要软件并加密磁盘。

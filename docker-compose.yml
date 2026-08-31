@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: it-ops-agent
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./logs:/app/logs
+      - ./chroma_db:/app/chroma_db
+      - ./data:/app/data
+    environment:
+      - CHAT_MODEL_NAME=${CHAT_MODEL_NAME:-deepseek-v4-pro}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.deepseek.com}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - EMBEDDING_MODEL_NAME=${EMBEDDING_MODEL_NAME:-BAAI/bge-small-zh-v1.5}
+      - HF_HUB_OFFLINE=1
+    restart: unless-stopped

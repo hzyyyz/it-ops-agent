@@ -1,0 +1,49 @@
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# 向量数据库
+chroma_db/
+*.sqlite3
+*.sqlite3-journal
+
+# 日志文件
+logs/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# JetBrains AI
+.jbeval/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# 聊天历史
+chat_history/
+
+# MD5 去重记录
+md5.text
+
+# 操作系统
+.DS_Store
+Thumbs.db

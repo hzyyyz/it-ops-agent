@@ -29,7 +29,10 @@ class ReactAgent(object):
 
         for chunk in self.agent.stream(input_dict, stream_mode="values", context={"report": False}):
             latest_message = chunk["messages"][-1]
-            if latest_message.content and getattr(latest_message, "type", "") == "ai":
+            # 只输出最终回答：AI消息且不带工具调用（跳过用户消息和中间推理步骤）
+            if (latest_message.content
+                    and getattr(latest_message, "type", "") == "ai"
+                    and not getattr(latest_message, "tool_calls", None)):
                 yield latest_message.content.strip() + "\n"
 
 

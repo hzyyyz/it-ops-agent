@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>IT 运维助手</title>
+  <link rel="stylesheet" href="/ui/styles.css">
+  <script src="/ui/app.js" defer></script>
+</head>
+<body>
+  <div class="auth-screen" id="auth-screen" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+    <form class="auth-card" id="auth-form">
+      <div class="welcome-icon">✦</div>
+      <h2 id="auth-title">进入 IT 运维助手</h2>
+      <p>输入本地管理员口令，访问聊天、知识库和执行记录。</p>
+      <label for="admin-token">管理员口令</label>
+      <input id="admin-token" type="password" autocomplete="off" required minlength="32">
+      <button type="submit">进入工作台</button>
+      <p class="auth-error" id="auth-error" role="alert" hidden></p>
+    </form>
+  </div>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar" aria-label="历史会话">
+      <div class="brand"><div class="brand-mark">✦</div><div><strong>IT 运维助手</strong><span>Agent 工作台</span></div></div>
+      <button class="new-chat" id="new-chat" type="button"><span>＋</span> 新建会话</button>
+      <div class="sidebar-label">历史会话</div>
+      <div class="session-list" id="session-list"><p class="muted">正在加载…</p></div>
+      <div class="sidebar-footer"><span class="status-dot" id="status-dot"></span><span id="connection-status">连接中</span></div>
+    </aside>
+
+    <main class="chat-column">
+      <header class="topbar">
+        <button class="icon-button mobile-menu" id="menu-button" type="button" aria-label="打开菜单">☰</button>
+        <div><div class="eyebrow">WORKSPACE / CHAT</div><h1 id="conversation-title">新会话</h1></div>
+        <div class="topbar-actions"><button class="subtle-button" id="delete-session" type="button" hidden>删除会话</button><button class="subtle-button" id="logout" type="button">退出</button></div>
+      </header>
+      <div class="notice" id="notice" role="status" hidden></div>
+      <section class="chat-scroll" id="chat-scroll" aria-label="聊天内容">
+        <div class="welcome" id="welcome">
+          <div class="welcome-icon">✦</div>
+          <p class="eyebrow">IT OPERATIONS AGENT</p>
+          <h2>今天需要排查什么？</h2>
+          <p>查询设备状态、查找运维资料，或生成有依据的设备健康报告。</p>
+          <div class="suggestions">
+            <button type="button" data-prompt="电脑蓝屏怎么排查？">电脑蓝屏怎么排查？ <span>↗</span></button>
+            <button type="button" data-prompt="查看当前 CPU 使用率">查看当前 CPU 使用率 <span>↗</span></button>
+            <button type="button" data-prompt="生成 EMP1001 在 2025-06 的设备健康报告">生成设备健康报告 <span>↗</span></button>
+          </div>
+        </div>
+        <div class="messages" id="messages" aria-live="polite"></div>
+      </section>
+      <div class="composer-wrap">
+        <form class="composer" id="chat-form">
+          <label class="sr-only" for="message-input">输入问题</label>
+          <textarea id="message-input" rows="2" maxlength="10000" placeholder="向 IT 运维助手提问… (Enter 发送，Shift+Enter 换行)"></textarea>
+          <button class="send-button" id="send-button" type="submit" aria-label="发送消息">➤</button>
+        </form>
+        <p class="composer-hint">回答由 Agent 生成；涉及重要运维操作时请核对实际环境。</p>
+      </div>
+    </main>
+
+    <aside class="insights" aria-label="知识库与执行记录">
+      <div class="panel-heading"><span class="eyebrow">KNOWLEDGE BASE</span><h2>知识库</h2><p>管理用于检索的本地文档</p></div>
+      <div class="knowledge-actions">
+        <label class="upload-button" for="file-input">＋ 上传文档</label>
+        <input id="file-input" type="file" accept=".txt,.pdf" hidden>
+        <button class="sync-button" id="sync-knowledge" type="button">同步索引</button>
+      </div>
+      <div class="documents" id="documents"><p class="muted">正在加载…</p></div>
+      <div class="panel-divider"></div>
+      <div class="panel-heading trace-heading"><span class="eyebrow">OBSERVABILITY</span><h2>Agent Trace</h2><p>本次请求的执行节点与耗时</p></div>
+      <div class="trace-list" id="trace-list"><p class="muted">完成一次对话后显示执行记录。</p></div>
+    </aside>
+  </div>
+</body>
+</html>

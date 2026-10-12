@@ -1,6 +1,18 @@
-import time
+from pathlib import Path
+import os
+from secrets import compare_digest
+
 import streamlit as st
-from agent.react_agent import ReactAgent
+from dotenv import load_dotenv
+
+from frontend.chat_client import ChatAPIError, request_chat_stream, list_sessions, get_session, delete_session
+
+load_dotenv(Path(__file__).with_name(".env"))
+
+WELCOME = {"role": "assistant", "content": "你好，我是IT运维智能助手，可以帮你排查设备故障、查询资产信息、生成设备健康度报告，请问有什么需要？"}
+st.session_state.setdefault("session_id", None)
+st.session_state.setdefault("message", [WELCOME.copy()])
+st.session_state.setdefault("session_offset", 0)
 
 # 页面配置
 st.set_page_config(
@@ -9,6 +21,25 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="expanded",
 )
+
+st.session_state.setdefault("admin_authenticated", False)
+expected_admin_token = os.getenv("AGENT_ADMIN_TOKEN", "")
+if len(expected_admin_token) < 32 or expected_admin_token.startswith("replace-with-"):
+    st.error("请先在环境变量或 .env 中配置至少 32 个随机字符的 AGENT_ADMIN_TOKEN。")
+    st.stop()
+if not st.session_state["admin_authenticated"]:
+    st.title("进入 IT 运维助手")
+    with st.form("admin_login"):
+        entered_token = st.text_input("管理员口令", type="password", key="admin_password")
+        submitted = st.form_submit_button("进入工作台")
+    if submitted:
+        if compare_digest(entered_token, expected_admin_token):
+            st.session_state["admin_authenticated"] = True
+            st.rerun()
+        else:
+            st.error("管理员口令无效。")
+    st.stop()
+st.session_state.pop("admin_password", None)
 
 # 自定义样式
 st.markdown("""
@@ -38,18 +69,57 @@ st.markdown("""
 
 # 侧边栏
 with st.sidebar:
+    if st.button("退出工作台"):
+        st.session_state["admin_authenticated"] = False
+        st.rerun()
     st.markdown('<div class="main-header">IT 运维助手</div>', unsafe_allow_html=True)
     st.caption("企业设备管理与故障排查")
 
     st.divider()
 
     st.markdown('<div class="sidebar-section"><h3>快捷操作</h3></div>', unsafe_allow_html=True)
-    if st.button("清除对话", use_container_width=True):
-        st.session_state["message"] = [
-            {"role": "assistant",
-             "content": "你好，我是IT运维智能助手，可以帮你排查设备故障、查询资产信息、生成设备健康度报告，请问有什么需要？"}
-        ]
+    if st.button("新建会话"):
+        st.session_state["session_id"] = None
+        st.session_state["message"] = [WELCOME.copy()]
+        st.session_state.pop("_quick_question", None)
         st.rerun()
+
+    st.caption("历史会话")
+    try:
+        sessions = list_sessions(offset=st.session_state["session_offset"])
+        for session in sessions:
+            label = session["title"]
+            if session["id"] == st.session_state["session_id"]:
+                label = "当前 · " + label
+            if st.button(label, key=f"session_{session['id']}"):
+                st.session_state["session_id"] = session["id"]
+                st.session_state["message"] = []
+                st.session_state.pop("_quick_question", None)
+                st.rerun()
+        if not sessions:
+            st.caption("暂无会话")
+        if st.button("上一页", disabled=st.session_state["session_offset"] == 0):
+            st.session_state["session_offset"] = max(0, st.session_state["session_offset"] - 20)
+            st.rerun()
+        if st.button("下一页", disabled=len(sessions) < 20):
+            st.session_state["session_offset"] += 20
+            st.rerun()
+    except ChatAPIError as exc:
+        st.warning(str(exc))
+
+    current_id = st.session_state["session_id"]
+    if current_id:
+        confirmed = st.checkbox("确认删除此会话及全部消息", key=f"delete_confirm_{current_id}")
+        if st.button("删除当前会话", disabled=not confirmed):
+            try:
+                delete_session(current_id)
+                st.session_state["session_id"] = None
+                st.session_state["message"] = [WELCOME.copy()]
+                st.session_state["session_offset"] = 0
+                st.session_state.pop("_quick_question", None)
+                st.rerun()
+            except ChatAPIError as exc:
+                st.error(str(exc))
 
     st.divider()
 
@@ -62,7 +132,7 @@ with st.sidebar:
         "员工设备采购有什么建议",
     ]
     for q in quick_questions:
-        if st.button(q, use_container_width=True):
+        if st.button(q):
             st.session_state["_quick_question"] = q
             st.rerun()
 
@@ -70,21 +140,23 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-section"><h3>关于</h3></div>', unsafe_allow_html=True)
     st.caption("基于 LangChain/LangGraph 构建的 ReAct Agent，集成 RAG 检索增强生成。")
-    st.caption("v1.0 | DeepSeek")
+    st.caption("v3.0 | 实时回答 · MySQL 历史会话")
 
 # 主内容区
 st.markdown('<p class="main-header">IT运维智能助手</p>', unsafe_allow_html=True)
 st.caption("排查设备故障 · 查询资产信息 · 生成健康度报告 · 安全策略咨询")
 
-# 初始化 session state
-if "message" not in st.session_state:
-    st.session_state["message"] = [
-        {"role": "assistant",
-         "content": "你好，我是IT运维智能助手，可以帮你排查设备故障、查询资产信息、生成设备健康度报告，请问有什么需要？"}
-    ]
-
-if "agent" not in st.session_state:
-    st.session_state["agent"] = ReactAgent()
+# 切换会话和页面重跑时都以数据库中的历史为准。
+if st.session_state["session_id"]:
+    try:
+        detail = get_session(st.session_state["session_id"])
+        st.session_state["message"] = [
+            {"role": item["role"], "content": item["content"]} for item in detail["messages"]
+        ]
+    except ChatAPIError as exc:
+        st.error(str(exc))
+        st.caption("可以重试或点击新建会话。")
+        st.stop()
 
 # 渲染历史消息
 for message in st.session_state["message"]:
@@ -100,25 +172,18 @@ else:
 
 if prompt:
     st.chat_message("user").write(prompt)
-    st.session_state["message"].append({"role": "user", "content": prompt})
-
-    response_messages = []
-    with st.spinner("分析处理中..."):
+    with st.chat_message("assistant"):
         try:
-            history = st.session_state["message"][:-1]
-            res_stream = st.session_state["agent"].execute_stream(prompt, history)
+            stream = request_chat_stream(prompt, st.session_state["session_id"])
+            answer = st.write_stream(stream)
+            st.session_state["session_id"] = stream.session_id
+            st.session_state["message"].extend([
+                {"role": "user", "content": prompt},
+                {"role": "assistant", "content": answer},
+            ])
+            st.session_state["session_offset"] = 0
+            st.rerun()
 
-            def capture(generator, cache_list):
-                for chunk in generator:
-                    cache_list.append(chunk)
-                    for char in chunk:
-                        time.sleep(0.01)
-                        yield char
-
-            with st.chat_message("assistant"):
-                st.write_stream(capture(res_stream, response_messages))
-            st.session_state["message"].append({"role": "assistant", "content": "".join(response_messages)})
-
-        except Exception as e:
-            st.error(f"处理请求时出现异常：{str(e)}")
-            st.caption("请刷新页面后重试，或联系管理员。")
+        except ChatAPIError as exc:
+            st.error(str(exc))
+            st.caption("请先刷新会话核对历史，再决定是否重新发送。")

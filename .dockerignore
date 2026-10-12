@@ -15,5 +15,9 @@ logs/
 .env
 .env.*
 chroma_db/
+hf_cache/
+reports/
+backups/
+logs_streamlit_run.txt
 *.sqlite3
 *.sqlite3-journal

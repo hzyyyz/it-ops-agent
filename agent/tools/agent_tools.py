@@ -93,7 +93,7 @@ def query_asset_record(employee_id: str, month: str) -> str:
     try:
         return str(external_data[employee_id][month])
     except KeyError:
-        logger.warning(f"[query_asset_record]未能查询到员工:{employee_id}在{month}的设备记录。")
+        logger.warning("[query_asset_record]未找到对应月份的设备记录")
         return ""
 
 

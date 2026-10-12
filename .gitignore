@@ -17,12 +17,17 @@ build/
 
 # 向量数据库
 chroma_db/
+hf_cache/
+backups/
 *.sqlite3
 *.sqlite3-journal
 
 # 日志文件
 logs/
 *.log
+logs_streamlit_run.txt
+reports/*.json
+reports/*.jsonl
 
 # IDE
 .idea/

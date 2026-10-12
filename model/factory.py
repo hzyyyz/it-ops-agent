@@ -27,6 +27,19 @@ def _resolve_local_model_path(model_name: str) -> str:
                 return snapshot_path
     return model_name
 
+
+def _resolve_api_key(base_url: str) -> Optional[str]:
+    """按端点选择密钥：DeepSeek 不接受 OpenAI 密钥，反之亦然。
+
+    base_url 指向谁就优先用谁的密钥；对应的密钥缺失时才退回另一个，
+    以兼容用 OpenAI 协议、但自建密钥的自定义服务。
+    """
+    preferred = ("DEEPSEEK_API_KEY", "OPENAI_API_KEY")
+    if "deepseek" not in base_url.lower():
+        preferred = preferred[::-1]
+    return os.getenv(preferred[0]) or os.getenv(preferred[1]) or rag_conf.get("openai_api_key")
+
+
 class BaseModelFactory(ABC):
     @abstractmethod
     def generator(self) -> Optional[ Embeddings | ChatOpenAI ]:
@@ -35,11 +48,12 @@ class BaseModelFactory(ABC):
 
 class ChatModelFactory(BaseModelFactory):
     def generator(self) -> Optional[Embeddings | ChatOpenAI]:
+        base_url = os.getenv("OPENAI_BASE_URL", rag_conf.get("openai_base_url", ""))
         kwargs = {
             "model": os.getenv("CHAT_MODEL_NAME", rag_conf.get("chat_model_name", "")),
-            "openai_api_base": os.getenv("OPENAI_BASE_URL", rag_conf.get("openai_base_url", "")),
+            "openai_api_base": base_url,
         }
-        api_key = os.getenv("OPENAI_API_KEY") or rag_conf.get("openai_api_key")
+        api_key = _resolve_api_key(base_url)
         if api_key:
             kwargs["openai_api_key"] = api_key
         return ChatOpenAI(**kwargs)

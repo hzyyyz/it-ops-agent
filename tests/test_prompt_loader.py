@@ -16,7 +16,10 @@ class TestPromptLoader:
     def test_load_system_prompt_contains_tool_references(self):
         prompt = load_system_prompt()
         assert "search_knowledge_base" in prompt
-        assert "check_device_status" in prompt
+        assert "get_cpu_usage" in prompt
+        assert "get_memory_usage" in prompt
+        assert "get_disk_usage" in prompt
+        assert "get_process_list" in prompt
         assert "prepare_report_context" in prompt
 
     def test_load_rag_prompts_returns_non_empty_string(self):

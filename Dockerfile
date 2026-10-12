@@ -17,8 +17,8 @@ COPY . .
 # 创建必要目录
 RUN mkdir -p logs chroma_db
 
-EXPOSE 8501
+EXPOSE 8501 8000 8001
 
-HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health || exit 1
+HEALTHCHECK CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health', timeout=5)" || exit 1
 
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
